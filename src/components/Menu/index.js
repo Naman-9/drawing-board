@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencil, faRotateLeft, faRotateRight, faArrowDown, faArrowUp, faEraser } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faRotateLeft, faRotateRight, faArrowDown, faArrowUp, faEraser, faSave } from '@fortawesome/free-solid-svg-icons';
 import styles from "./index.module.css";
 import { MENU_ITEMS } from '@/constants';
 import { menuItemClick, actionItemClick } from '@/slice/menuSlice';
@@ -32,11 +32,9 @@ const Menu = () => {
                 <FontAwesomeIcon icon={faRotateRight} className={styles.icon} />
             </div>
             <div className={styles.iconWrapper} >
-                <FontAwesomeIcon icon={faArrowDown} className={styles.icon} />
+                <FontAwesomeIcon icon={faSave} className={styles.icon} />
             </div>
-            <div className={styles.iconWrapper} >
-                <FontAwesomeIcon icon={faArrowUp} className={styles.icon} />
-            </div>
+            
         </div>
     </>
   )
