@@ -1,11 +1,12 @@
 import { MENU_ITEMS } from '@/constants';
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { menuItemClick, actionItemClick } from '@/slice/menuSlice';
+import { actionItemClick } from '@/slice/menuSlice';
+import { socket } from '@/socket';
 
 
 const Board = () => {
-    const disptach = useDispatch();
+    const dispatch = useDispatch();
     const canvasRef = useRef(null);
     const drawHistory = useRef([]);
     const historyPointer = useRef(0);
@@ -33,8 +34,8 @@ const Board = () => {
             context.putImageData(imageData, 0, 0);  // puts the image data on canvas starting from 0,0
         }
         // here "actionMenuItem" will create pblm as download value is set to download and on clkg 2nd time it won't work. tf, update to null required.
-        disptach(actionItemClick(null));
-    }, [actionMenuItem, disptach]);
+        dispatch(actionItemClick(null));
+    }, [actionMenuItem, dispatch]);
 
 
     useEffect(() => {
@@ -42,13 +43,22 @@ const Board = () => {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        const changeConfig = () => {
+        const changeConfig = (color, size) => {
             context.strokeStyle = color;
             context.lineWidth = size;
         }
 
+        const handleChangeConfig = (config) => {
+            console.log("config", config);
+            changeConfig(config.color, config.size);
+        }
 
-        changeConfig();
+        changeConfig(color, size);
+        socket.on("changeConfig", handleChangeConfig);
+
+        return () => {
+            socket.off("changeConfig", handleChangeConfig);
+        }
 
     }, [color, size])
 
@@ -88,10 +98,13 @@ const Board = () => {
         const handleMouseDown = (e) => {
             shouldDraw.current = true;
             beginPath(e.clientX, e.clientY);         // start from this particular point
+            socket.emit('beginPath', { x: e.clientX, y: e.clientY });
         };
+
         const handleMouseMove = (e) => {
             if (!shouldDraw.current) return;
             drawLine(e.clientX, e.clientY);       // create line from this coords
+            socket.emit('drawLine', { x: e.clientX, y: e.clientY });
         };
         const handleMouseup = (e) => {
             shouldDraw.current = false;
@@ -102,15 +115,28 @@ const Board = () => {
             historyPointer.current = drawHistory.current.length - 1;         // cannot use pop() as we need to implement redo feature
         };
 
+        const handleBeginPath = (path) => {
+            beginPath(path.x, path.y);
+        }
+
+        const handleDrawLine = (path) => {
+            drawLine(path.x, path.y);
+        }
+
         canvas.addEventListener('mousedown', handleMouseDown);      // mouse clicked
         canvas.addEventListener('mousemove', handleMouseMove);      // moving
         canvas.addEventListener('mouseup', handleMouseup);          // releasing
+
+        socket.on('beginPath', handleBeginPath);
+        socket.on('drawLine', handleDrawLine);
 
         return () => {
             canvas.removeEventListener('mousedown', handleMouseDown);      // mouse clicked
             canvas.removeEventListener('mousemove', handleMouseMove);      // moving
             canvas.removeEventListener('mouseup', handleMouseup);          // releasing
 
+            socket.off('beginPath', handleBeginPath);
+            socket.off('drawLine', handleDrawLine);
         }
     }, []);
 
