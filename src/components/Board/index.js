@@ -97,14 +97,16 @@ const Board = () => {
 
         const handleMouseDown = (e) => {
             shouldDraw.current = true;
-            beginPath(e.clientX, e.clientY);         // start from this particular point
-            socket.emit('beginPath', { x: e.clientX, y: e.clientY });
+             // start from this particular point
+            beginPath(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+            socket.emit('beginPath', {x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY});
         };
 
         const handleMouseMove = (e) => {
             if (!shouldDraw.current) return;
-            drawLine(e.clientX, e.clientY);       // create line from this coords
-            socket.emit('drawLine', { x: e.clientX, y: e.clientY });
+            // create line from this coords
+            drawLine(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+            socket.emit('drawLine', {x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY});
         };
         const handleMouseup = (e) => {
             shouldDraw.current = false;
@@ -127,6 +129,10 @@ const Board = () => {
         canvas.addEventListener('mousemove', handleMouseMove);      // moving
         canvas.addEventListener('mouseup', handleMouseup);          // releasing
 
+        canvas.addEventListener('touchstart', handleMouseDown);
+        canvas.addEventListener('touchmove', handleMouseMove);
+        canvas.addEventListener('touchend', handleMouseup);
+
         socket.on('beginPath', handleBeginPath);
         socket.on('drawLine', handleDrawLine);
 
@@ -134,6 +140,10 @@ const Board = () => {
             canvas.removeEventListener('mousedown', handleMouseDown);      // mouse clicked
             canvas.removeEventListener('mousemove', handleMouseMove);      // moving
             canvas.removeEventListener('mouseup', handleMouseup);          // releasing
+
+            canvas.removeEventListener('touchstart', handleMouseDown);
+            canvas.removeEventListener('touchmove', handleMouseMove);
+            canvas.removeEventListener('touchend', handleMouseup);
 
             socket.off('beginPath', handleBeginPath);
             socket.off('drawLine', handleDrawLine);
